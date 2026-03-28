@@ -44,7 +44,7 @@ function callGemini(prompt) {
 
 app.post("/generate", async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const prompt = req.body.prompt || req.body.message || JSON.stringify(req.body);
     console.log("[AI] prompt:", prompt.slice(0, 60));
     const code = await callGemini(prompt);
     res.json({ code });
