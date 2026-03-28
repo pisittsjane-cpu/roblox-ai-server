@@ -55,5 +55,5 @@ app.post("/generate", async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => res.send("Roblox AI Backend (Gemini) is running!"));
+app.get("/", (req, res) => res.send("Key: " + (GEMINI_API_KEY ? GEMINI_API_KEY.slice(0,8) + "..." : "NOT SET")));
 app.listen(3000, () => console.log("Server running on port 3000"));
