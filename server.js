@@ -1,3 +1,4 @@
+cat > /mnt/user-data/outputs/server.js << 'EOF'
 import express from "express";
 import https from "https";
 
@@ -5,6 +6,14 @@ const app = express();
 app.use(express.json());
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+function cleanCode(text) {
+  // ลบ markdown backticks ออก
+  return text
+    .replace(/```[\w]*\n?/g, "")
+    .replace(/```/g, "")
+    .trim();
+}
 
 function callGemini(prompt) {
   return new Promise((resolve, reject) => {
@@ -15,13 +24,7 @@ function callGemini(prompt) {
       "At the end add a --[[ USAGE: ]] block explaining where to place the script.";
 
     const body = JSON.stringify({
-      contents: [
-        {
-          parts: [
-            { text: systemPrompt + "\n\n" + prompt }
-          ]
-        }
-      ]
+      contents: [{ parts: [{ text: systemPrompt + "\n\n" + prompt }] }]
     });
 
     const options = {
@@ -40,11 +43,9 @@ function callGemini(prompt) {
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "-- เกิดข้อผิดพลาด";
-          resolve(text);
-        } catch (e) {
-          reject(e);
-        }
+          const raw = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "-- เกิดข้อผิดพลาด";
+          resolve(cleanCode(raw));
+        } catch (e) { reject(e); }
       });
     });
 
@@ -68,6 +69,26 @@ app.post("/generate", async (req, res) => {
 });
 
 app.get("/", (req, res) => res.send("Roblox AI Backend (Gemini) is running!"));
-
 app.listen(3000, () => console.log("✅ Server running on port 3000"));
+EOF
+Output
+
+exit code 0
+
+Presented file
+Done
+โหลดไฟล์แล้วทำแบบนี้เลยครับ 👇
+
+ไปที่ GitHub → repo roblox-ai-server
+คลิกไฟล์ server.js → กด ดินสอ Edit
+ลบทั้งหมด แล้ว paste code ใหม่จากไฟล์ที่โหลด
+กด Commit changes
+รอ Render deploy เสร็จ แล้วลองใช้ plugin อีกครั้งครับ! 🚀
+Server
+JS 
+
+
+
+
+
 
