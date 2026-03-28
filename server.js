@@ -31,7 +31,8 @@ function callGemini(prompt) {
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          const raw = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "-- error";
+          console.log("[GEMINI RAW]", JSON.stringify(parsed).slice(0, 300));
+const raw = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "-- error";
           resolve(cleanCode(raw));
         } catch (e) { reject(e); }
       });
