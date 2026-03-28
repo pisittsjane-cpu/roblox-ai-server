@@ -4,37 +4,50 @@ import https from "https";
 const app = express();
 app.use(express.json());
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-function callClaude(prompt) {
+function callGemini(prompt) {
   return new Promise((resolve, reject) => {
+    const systemPrompt =
+      "You are an expert Roblox Luau scripter. " +
+      "Respond with ONLY clean working Luau code — no markdown, no backticks, no explanation before the code. " +
+      "Add short inline comments in Thai. " +
+      "At the end add a --[[ USAGE: ]] block explaining where to place the script.";
+
     const body = JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      system: "You are an expert Roblox Luau scripter. Respond with ONLY clean working Luau code — no markdown, no backticks. Add short inline comments in Thai. At the end add a --[[ USAGE: ]] block.",
-      messages: [{ role: "user", content: prompt }],
+      contents: [
+        {
+          parts: [
+            { text: systemPrompt + "\n\n" + prompt }
+          ]
+        }
+      ]
     });
+
     const options = {
-      hostname: "api.anthropic.com",
-      path: "/v1/messages",
+      hostname: "generativelanguage.googleapis.com",
+      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
         "Content-Length": Buffer.byteLength(body),
       },
     };
+
     const req = https.request(options, (res) => {
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          resolve(parsed.content?.map((b) => b.text || "").join("") || "-- error");
-        } catch (e) { reject(e); }
+          const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "-- เกิดข้อผิดพลาด";
+          resolve(text);
+        } catch (e) {
+          reject(e);
+        }
       });
     });
+
     req.on("error", reject);
     req.write(body);
     req.end();
@@ -44,13 +57,17 @@ function callClaude(prompt) {
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
-    const code = await callClaude(prompt);
+    console.log("[AI] ได้รับ prompt:", prompt.slice(0, 60) + "...");
+    const code = await callGemini(prompt);
     res.json({ code });
+    console.log("[AI] ส่ง code กลับแล้ว ✓");
   } catch (err) {
+    console.error("[AI] Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get("/", (req, res) => res.send("Roblox AI Backend is running!"));
+app.get("/", (req, res) => res.send("Roblox AI Backend (Gemini) is running!"));
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+app.listen(3000, () => console.log("✅ Server running on port 3000"));
+
